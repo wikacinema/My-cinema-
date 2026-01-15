@@ -7,11 +7,21 @@
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Wika Cinema">
     
-    <link rel="apple-touch-icon" href="https://i.ibb.co/LzYvMvX/wika-logo.png">
-    <link rel="manifest" href="data:application/manifest+json,{'name':'Wika Cinema','short_name':'Wika','start_url':'.','display':'standalone','background_color':'#0b0b0b','theme_color':'#e50914','icons':[{'src':'https://i.ibb.co/LzYvMvX/wika-logo.png','sizes':'192x192','type':'image/png'},{'src':'https://i.ibb.co/LzYvMvX/wika-logo.png','sizes':'512x512','type':'image/png'}]}">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png">
+    <link rel="manifest" href="data:application/manifest+json,{
+        'name': 'Wika Cinema',
+        'short_name': 'Wika',
+        'start_url': '.',
+        'display': 'standalone',
+        'background_color': '#0b0b0b',
+        'theme_color': '#e50914',
+        'icons': [
+            {'src': 'https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png', 'sizes': '192x192', 'type': 'image/png'},
+            {'src': 'https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png', 'sizes': '512x512', 'type': 'image/png'}
+        ]
+    }">
 
     <style>
         :root { --primary: #e50914; --bg: #0b0b0b; --card-bg: #1a1a1a; }
@@ -21,23 +31,20 @@
         .logo { color: var(--primary); font-size: 24px; font-weight: bold; cursor: pointer; }
         #search-input { padding: 10px 20px; border-radius: 20px; border: none; width: 100%; max-width: 400px; background: #222; color: white; outline: none; text-align: center; }
 
-        /* تنسيق زر التثبيت */
         #install-app-btn {
-            display: none; /* سيظهر فقط عبر الجافاسكريبت عند استيفاء الشروط */
+            display: none;
             position: fixed;
             bottom: 25px;
             left: 25px;
             z-index: 9999;
             background: #2ecc71;
             color: white;
-            border: none;
+            border: 2px solid white;
             padding: 12px 25px;
             border-radius: 50px;
             font-weight: bold;
             box-shadow: 0 5px 20px rgba(0,0,0,0.8);
             cursor: pointer;
-            font-size: 14px;
-            border: 2px solid white;
         }
 
         .filter-section { background: #000; padding: 10px 0; border-bottom: 1px solid #333; }
@@ -131,12 +138,10 @@
 </div>
 
 <script>
-    // مفتاحك الأصلي الفعال
     const API_KEY = '243d3178406656f0f1ceb1fde181815e'; 
     const IMG = 'https://image.tmdb.org/t/p/w500';
     let page = 1, currentGenre = '', currentLang = '', searchQuery = '';
 
-    // منطق برمجة زر التثبيت
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -148,14 +153,11 @@
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                document.getElementById('install-app-btn').style.display = 'none';
-            }
+            if (outcome === 'accepted') document.getElementById('install-app-btn').style.display = 'none';
             deferredPrompt = null;
         }
     });
 
-    // الدوال الأصلية للفيلم
     async function fetchMovies(isMore = false) {
         const grid = document.getElementById('movie-grid');
         if(!isMore) { page = 1; grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">جاري التحميل...</p>'; }

@@ -31,12 +31,13 @@
         .logo { color: var(--primary); font-size: 24px; font-weight: bold; cursor: pointer; }
         #search-input { padding: 10px 20px; border-radius: 20px; border: none; width: 100%; max-width: 400px; background: #222; color: white; outline: none; text-align: center; }
 
+        /* زر التثبيت */
         #install-app-btn {
-            display: none;
+            display: none; /* يظهر فقط عند توفر شروط التثبيت وفتح الموقع عبر HTTPS */
             position: fixed;
             bottom: 25px;
             left: 25px;
-            z-index: 9999;
+            z-index: 1100;
             background: #2ecc71;
             color: white;
             border: 2px solid white;
@@ -142,6 +143,7 @@
     const IMG = 'https://image.tmdb.org/t/p/w500';
     let page = 1, currentGenre = '', currentLang = '', searchQuery = '';
 
+    // منطق زر التثبيت
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();

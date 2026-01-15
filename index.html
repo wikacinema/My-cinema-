@@ -8,20 +8,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Wika Cinema">
+    <meta name="theme-color" content="#e50914">
     
     <link rel="apple-touch-icon" href="https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png">
-    <link rel="manifest" href="data:application/manifest+json,{
-        'name': 'Wika Cinema',
-        'short_name': 'Wika',
-        'start_url': '.',
-        'display': 'standalone',
-        'background_color': '#0b0b0b',
-        'theme_color': '#e50914',
-        'icons': [
-            {'src': 'https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png', 'sizes': '192x192', 'type': 'image/png'},
-            {'src': 'https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png', 'sizes': '512x512', 'type': 'image/png'}
-        ]
-    }">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Wika Cinema","short_name":"Wika","start_url":".","display":"standalone","background_color":"#0b0b0b","theme_color":"#e50914","icons":[{"src":"https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"https://i.ibb.co/zTr7jm5M/Picsart-26-01-16-01-39-26-682.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
 
     <style>
         :root { --primary: #e50914; --bg: #0b0b0b; --card-bg: #1a1a1a; }
@@ -31,9 +21,8 @@
         .logo { color: var(--primary); font-size: 24px; font-weight: bold; cursor: pointer; }
         #search-input { padding: 10px 20px; border-radius: 20px; border: none; width: 100%; max-width: 400px; background: #222; color: white; outline: none; text-align: center; }
 
-        /* زر التثبيت */
         #install-app-btn {
-            display: none; /* يظهر فقط عند توفر شروط التثبيت وفتح الموقع عبر HTTPS */
+            display: none;
             position: fixed;
             bottom: 25px;
             left: 25px;
@@ -143,7 +132,15 @@
     const IMG = 'https://image.tmdb.org/t/p/w500';
     let page = 1, currentGenre = '', currentLang = '', searchQuery = '';
 
-    // منطق زر التثبيت
+    // تسجيل Service Worker لضمان التثبيت كتطبيق
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const code = "self.addEventListener('fetch', function(e){});";
+            const blob = new Blob([code], {type: 'text/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
+        });
+    }
+
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -209,16 +206,12 @@
 
     function openPlayer(id) {
         document.getElementById('player-page').style.display = 'flex';
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-        }
         document.getElementById('video-frame').innerHTML = `<iframe src="https://vidsrc.me/embed/movie?tmdb=${id}" allowfullscreen></iframe>`;
     }
 
     function closePlayer() {
         document.getElementById('player-page').style.display = 'none';
         document.getElementById('video-frame').innerHTML = '';
-        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
     }
 
     function showMain() {

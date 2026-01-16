@@ -1,9 +1,13 @@
-self.addEventListener('install', (event) => {
-    self.skipWaiting();
+self.addEventListener('install', event => {
+  self.skipWaiting();
 });
-self.addEventListener('activate', (event) => {
-    return self.clients.claim();
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
 });
-self.addEventListener('fetch', (event) => {
-    // ملف فارغ لغرض تفعيل التثبيت فقط
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
 });

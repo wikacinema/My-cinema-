@@ -95,4 +95,100 @@
 </div>
 <div id="player-page">
     <button class="close-player" onclick="closePlayer()">✕</button>
-    <div style
+    <div style="flex:1" id="video-frame"></div>
+</div>
+
+<script>
+    // تعديل مسار التسجيل ليتوافق مع رابط GitHub Pages
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/My-cinema-/sw.js');
+    }
+
+    const API_KEY = '243d3178406656f0f1ceb1fde181815e'; 
+    const IMG = 'https://image.tmdb.org/t/p/w500';
+    let page = 1, currentGenre = '', currentLang = '', searchQuery = '';
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('install-app-btn').style.display = 'block';
+    });
+
+    document.getElementById('install-app-btn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') document.getElementById('install-app-btn').style.display = 'none';
+            deferredPrompt = null;
+        }
+    });
+
+    async function fetchMovies(isMore = false) {
+        const grid = document.getElementById('movie-grid');
+        if(!isMore) { page = 1; grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">جاري التحميل...</p>'; }
+        let url = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=ar-SA&sort_by=popularity.desc&page=${page}`;
+        if(searchQuery) url = `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&language=ar-SA&query=${encodeURIComponent(searchQuery)}&page=${page}`;
+        else {
+            if(currentGenre) url += `&with_genres=${currentGenre}`;
+            if(currentLang) url += `&with_original_language=${currentLang}`;
+        }
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if(data.results) renderMovies(data.results, isMore);
+        } catch (e) { grid.innerHTML = 'خطأ في التحميل.'; }
+    }
+
+    function renderMovies(movies, isMore) {
+        const grid = document.getElementById('movie-grid');
+        if(!isMore) grid.innerHTML = '';
+        movies.forEach(m => {
+            if(!m.poster_path) return;
+            const div = document.createElement('div');
+            div.className = 'movie-card';
+            div.onclick = () => showDetails(m);
+            div.innerHTML = `<img src="${IMG + m.poster_path}"><div class="movie-info"><b>${m.title}</b><br>⭐ ${m.vote_average.toFixed(1)}</div>`;
+            grid.appendChild(div);
+        });
+    }
+
+    function showDetails(m) {
+        document.getElementById('main-page').style.display = 'none';
+        const dp = document.getElementById('details-page');
+        dp.style.display = 'block';
+        dp.style.backgroundImage = `url('https://image.tmdb.org/t/p/original${m.backdrop_path || m.poster_path}')`;
+        document.getElementById('details-content').innerHTML = `
+            <img src="${IMG + m.poster_path}" class="details-poster">
+            <div class="details-info">
+                <h1>${m.title}</h1>
+                <p>${m.overview || 'لا يوجد وصف متاح.'}</p>
+                <button class="btn-action" onclick="openPlayer('${m.id}')">مشاهدة الآن</button>
+            </div>`;
+        window.scrollTo(0,0);
+    }
+
+    function openPlayer(id) {
+        document.getElementById('player-page').style.display = 'flex';
+        document.getElementById('video-frame').innerHTML = `<iframe src="https://vidsrc.me/embed/movie?tmdb=${id}" allowfullscreen></iframe>`;
+    }
+    function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('video-frame').innerHTML = ''; }
+    function showMain() { document.getElementById('details-page').style.display = 'none'; document.getElementById('main-page').style.display = 'block'; }
+    function updateFilter(type, val, btn) {
+        searchQuery = '';
+        if(type === 'genre') {
+            currentGenre = val;
+            document.querySelectorAll('#genres .filter-btn').forEach(b => b.classList.remove('active'));
+        } else {
+            currentLang = val;
+            document.querySelectorAll('#langs .filter-btn').forEach(b => b.classList.remove('active'));
+        }
+        btn.classList.add('active');
+        fetchMovies();
+    }
+    function loadMore() { page++; fetchMovies(true); }
+    document.getElementById('search-input').onkeypress = (e) => { if(e.key === 'Enter') { searchQuery = e.target.value; fetchMovies(); } }
+    fetchMovies();
+</script>
+</body>
+</html>

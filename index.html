@@ -23,11 +23,10 @@
         .filter-btn.active { background: var(--primary); border-color: var(--primary); }
         .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 15px 5%; }
         .movie-card { background: var(--card-bg); border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid #333; position: relative; }
-        .movie-card img { width: 100%; height: auto; display: block; min-height: 180px; background: #222; }
+        .movie-card img { width: 100%; height: 180px; display: block; background: #222; object-fit: contain; }
         .movie-info { padding: 6px; text-align: center; font-size: 11px; font-weight: bold; }
         .live-badge { position: absolute; top: 5px; right: 5px; background: red; color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
         #details-page, #player-page { display: none; position: fixed; inset: 0; background: #0b0b0b; z-index: 10000; overflow-y: auto; }
-        .details-content { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; text-align: center; gap: 15px; }
         .close-btn { position: fixed; top: 20px; left: 20px; background: rgba(255,0,0,0.8); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; z-index: 10001; }
         iframe, video { width: 100%; height: 100%; border: none; }
         .btn-action { background: var(--primary); color: white; border: none; padding: 12px 35px; border-radius: 25px; cursor: pointer; font-weight: bold; }
@@ -59,42 +58,27 @@
 
 <div id="section-tv" style="display:none;">
     <div class="filter-section">
-        <div class="filter-bar">
-            <button class="filter-btn active" onclick="filterTV('all', this)">الكل</button>
-            <button class="filter-btn" onclick="filterTV('sports', this)">رياضة ⚽</button>
-            <button class="filter-btn" onclick="filterTV('news', this)">أخبار 📰</button>
-            <button class="filter-btn" onclick="filterTV('kids', this)">أطفال 🧸</button>
-            <button class="filter-btn" onclick="filterTV('islami', this)">إسلامي 🕌</button>
+        <div class="filter-bar" id="tv-filters">
+            <button class="filter-btn active" onclick="renderTV('all', this)">كل القنوات</button>
+            <button class="filter-btn" onclick="renderTV('Sport', this)">رياضة ⚽</button>
+            <button class="filter-btn" onclick="renderTV('News', this)">أخبار 📰</button>
+            <button class="filter-btn" onclick="renderTV('Kids', this)">أطفال 🧸</button>
+            <button class="filter-btn" onclick="renderTV('Movies', this)">أفلام 🎬</button>
         </div>
     </div>
-    <div class="movie-grid" id="tv-grid">
-        <div class="movie-card tv-item" data-type="news" onclick="openIPTV('https://live-hls-web-ajm.getaj.net/AJM/index.m3u8')">
-            <span class="live-badge">LIVE</span>
-            <img src="https://via.placeholder.com/300x450/111/fff?text=Aljazeera"><div class="movie-info">الجزيرة مباشر</div>
-        </div>
-    </div>
+    <div class="movie-grid" id="tv-grid"></div>
 </div>
 
-<div id="details-page"><button class="close-btn" onclick="handleBack()">✕</button><div class="details-content" id="details-content"></div></div>
+<div id="details-page"><button class="close-btn" onclick="handleBack()">✕</button><div class="details-content" id="details-content" style="display:flex; flex-direction:column; align-items:center; padding:40px 20px; text-align:center; gap:15px;"></div></div>
 <div id="player-page"><button class="close-btn" onclick="handleBack()">✕</button><div style="flex:1" id="video-frame"></div></div>
 
 <script>
     const API_KEY = '243d3178406656f0f1ceb1fde181815e'; 
     const IMG = 'https://image.tmdb.org/t/p/w500';
-    let page = 1, currentMode = 'movies', currentGenre = '', currentLang = '', searchQuery = '';
+    let page = 1, currentMode = 'movies', currentGenre = '', currentLang = '', searchQuery = '', tvChannels = [];
 
-    const genresList = [
-        {id: '', n: 'الكل'}, {id: '28', n: 'أكشن'}, {id: '35', n: 'كوميدي'}, {id: '18', n: 'دراما'}, 
-        {id: '10751', n: 'عائلي'}, {id: '12', n: 'مغامرة'}, {id: '80', n: 'جريمة'}, {id: '878', n: 'خيال علمي'}, 
-        {id: '10749', n: 'رومانسي'}, {id: '53', n: 'إثارة'}, {id: '16', n: 'أنيميشن'}, {id: '14', n: 'خيالي'}, 
-        {id: '99', n: 'وثائقي'}, {id: '10402', n: 'موسيقى'}, {id: '37', n: 'غربي'}, {id: '36', n: 'تاريخي'}
-    ];
-
-    const langsList = [
-        {id: '', n: 'الكل'}, {id: 'ar', n: 'عربي'}, {id: 'en', n: 'إنجليزي'}, {id: 'fr', n: 'فرنسي'}, 
-        {id: 'tr', n: 'تركي'}, {id: 'ko', n: 'كوري'}, {id: 'hi', n: 'هندي'}, {id: 'ja', n: 'ياباني'}, 
-        {id: 'es', n: 'إسباني'}, {id: 'it', n: 'إيطالي'}, {id: 'de', n: 'ألماني'}, {id: 'ru', n: 'روسي'}
-    ];
+    const genresList = [{id: '', n: 'الكل'}, {id: '28', n: 'أكشن'}, {id: '35', n: 'كوميدي'}, {id: '18', n: 'دراما'}, {id: '10751', n: 'عائلي'}, {id: '12', n: 'مغامرة'}, {id: '80', n: 'جريمة'}, {id: '878', n: 'خيال'}, {id: '10749', n: 'رومانس'}, {id: '53', n: 'إثارة'}, {id: '16', n: 'أنيميشن'}, {id: '14', n: 'تاريخ'}, {id: '99', n: 'وثائقي'}, {id: '10402', n: 'موسيقى'}, {id: '37', n: 'غربي'}, {id: '36', n: 'سيرة'}];
+    const langsList = [{id: '', n: 'الكل'}, {id: 'ar', n: 'عربي'}, {id: 'en', n: 'إنجليزي'}, {id: 'fr', n: 'فرنسي'}, {id: 'tr', n: 'تركي'}, {id: 'ko', n: 'كوري'}, {id: 'hi', n: 'هندي'}, {id: 'ja', n: 'ياباني'}, {id: 'es', n: 'إسباني'}, {id: 'it', n: 'إيطالي'}, {id: 'de', n: 'ألماني'}, {id: 'ru', n: 'روسي'}];
 
     window.onpopstate = () => hidePages();
     function handleBack() { history.back(); }
@@ -104,14 +88,52 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-'+type));
         document.getElementById('section-content').style.display = type === 'tv' ? 'none' : 'block';
         document.getElementById('section-tv').style.display = type === 'tv' ? 'block' : 'none';
-        if(type !== 'tv') fetchContent();
+        if(type === 'tv' && tvChannels.length === 0) fetchTV(); else if(type !== 'tv') { renderFilters(); fetchContent(); }
+    }
+
+    // جلب القنوات من الرابط العالمي الذي أرسلته
+    async function fetchTV() {
+        const grid = document.getElementById('tv-grid');
+        grid.innerHTML = '<p>جاري جلب قائمة القنوات العالمية...</p>';
+        try {
+            const res = await fetch('https://iptv-org.github.io/iptv/index.m3u');
+            const data = await res.text();
+            const lines = data.split('\n');
+            tvChannels = [];
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('#EXTINF')) {
+                    const info = lines[i];
+                    const url = lines[i + 1]?.trim();
+                    const name = info.split(',')[1]?.trim() || "Channel";
+                    const logo = info.match(/tvg-logo="([^"]+)"/)?.[1] || "https://via.placeholder.com/300x450/111/fff?text=TV";
+                    const group = info.match(/group-title="([^"]+)"/)?.[1] || "";
+                    if(url && url.startsWith('http')) tvChannels.push({name, url, logo, group});
+                }
+            }
+            renderTV('all');
+        } catch (e) { grid.innerHTML = 'خطأ في جلب القنوات.'; }
+    }
+
+    function renderTV(filter, btn) {
+        if(btn) {
+            document.querySelectorAll('#tv-filters .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        const grid = document.getElementById('tv-grid');
+        grid.innerHTML = '';
+        const filtered = tvChannels.filter(c => filter === 'all' || c.group.toLowerCase().includes(filter.toLowerCase())).slice(0, 100);
+        filtered.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'movie-card';
+            div.onclick = () => openIPTV(c.url);
+            div.innerHTML = `<span class="live-badge">LIVE</span><img src="${c.logo}"><div class="movie-info">${c.name}</div>`;
+            grid.appendChild(div);
+        });
     }
 
     function renderFilters() {
-        const gBar = document.getElementById('genres-bar');
-        const lBar = document.getElementById('langs-bar');
-        gBar.innerHTML = genresList.map(g => `<button class="filter-btn ${currentGenre==g.id?'active':''}" onclick="updateFilter('genre','${g.id}',this)">${g.n}</button>`).join('');
-        lBar.innerHTML = langsList.map(l => `<button class="filter-btn ${currentLang==l.id?'active':''}" onclick="updateFilter('lang','${l.id}',this)">${l.n}</button>`).join('');
+        document.getElementById('genres-bar').innerHTML = genresList.map(g => `<button class="filter-btn ${currentGenre==g.id?'active':''}" onclick="updateFilter('genre','${g.id}',this)">${g.n}</button>`).join('');
+        document.getElementById('langs-bar').innerHTML = langsList.map(l => `<button class="filter-btn ${currentLang==l.id?'active':''}" onclick="updateFilter('lang','${l.id}',this)">${l.n}</button>`).join('');
     }
 
     async function fetchContent(isMore = false) {
@@ -122,7 +144,6 @@
         if(currentGenre) url += `&with_genres=${currentGenre}`;
         if(currentLang) url += `&with_original_language=${currentLang}`;
         if(searchQuery) url = `https://api.themoviedb.org/3/search/${type}?api_key=${API_KEY}&language=ar-SA&query=${encodeURIComponent(searchQuery)}&page=${page}`;
-        
         const res = await fetch(url);
         const data = await res.json();
         if(!isMore) grid.innerHTML = '';
@@ -140,10 +161,7 @@
         document.getElementById('details-page').style.display = 'block';
         history.pushState({p: 'd'}, "", "#details");
         const type = currentMode === 'movies' ? 'movie' : 'tv';
-        document.getElementById('details-content').innerHTML = `
-            <img src="${IMG + i.poster_path}" style="width:180px; border-radius:12px;">
-            <h1>${i.title || i.name}</h1><p>${i.overview || 'لا يوجد وصف.'}</p>
-            <button class="btn-action" onclick="openPlayer('${i.id}','${type}')">▶ مشاهدة الآن</button>`;
+        document.getElementById('details-content').innerHTML = `<img src="${IMG + i.poster_path}" style="width:180px; border-radius:12px;"><h1>${i.title || i.name}</h1><p>${i.overview || 'لا يوجد وصف.'}</p><button class="btn-action" onclick="openPlayer('${i.id}','${type}')">▶ مشاهدة الآن</button>`;
     }
 
     function openPlayer(id, type) {
@@ -159,26 +177,11 @@
         history.pushState({p: 'p'}, "", "#player");
     }
 
-    function updateFilter(t, v, b) {
-        if(t === 'genre') currentGenre = v; else currentLang = v;
-        renderFilters(); fetchContent();
-    }
-
-    function filterTV(t, b) {
-        document.querySelectorAll('#section-tv .filter-btn').forEach(btn => btn.classList.remove('active'));
-        b.classList.add('active');
-        document.querySelectorAll('.tv-item').forEach(i => i.style.display = (t==='all' || i.dataset.type===t)?'block':'none');
-    }
-
-    function hidePages() {
-        document.getElementById('details-page').style.display = 'none';
-        document.getElementById('player-page').style.display = 'none';
-        document.getElementById('video-frame').innerHTML = '';
-    }
-
+    function hidePages() { document.getElementById('details-page').style.display = 'none'; document.getElementById('player-page').style.display = 'none'; document.getElementById('video-frame').innerHTML = ''; }
+    function updateFilter(t, v) { if(t === 'genre') currentGenre = v; else currentLang = v; renderFilters(); fetchContent(); }
     function loadMore() { page++; fetchContent(true); }
     document.getElementById('search-input').oninput = (e) => { searchQuery = e.target.value; fetchContent(); };
-    
+
     renderFilters();
     fetchContent();
 </script>
